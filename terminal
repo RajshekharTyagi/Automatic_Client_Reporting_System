@@ -1,0 +1,4 @@
+{
+  "command": "npm run dev",
+  "description": "Start the development server"
+}

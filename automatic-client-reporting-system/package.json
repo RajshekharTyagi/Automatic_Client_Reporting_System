@@ -1,0 +1,16 @@
+{
+  "name": "automatic-client-reporting-system",
+  "version": "1.0.0",
+  "description": "Automatic Client Reporting System with Supabase and React",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "setup": "npm run setup:frontend && npm run setup:supabase",
+    "setup:frontend": "cd frontend && npm install",
+    "setup:supabase": "supabase init && supabase start"
+  },
+  "keywords": ["react", "supabase", "openai", "reporting", "file-upload"],
+  "author": "Your Name",
+  "license": "MIT"
+}
+
