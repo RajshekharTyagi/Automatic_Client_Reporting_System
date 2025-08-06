@@ -9,8 +9,16 @@
     "setup:frontend": "cd frontend && npm install",
     "setup:supabase": "supabase init && supabase start"
   },
-  "keywords": ["react", "supabase", "openai", "reporting", "file-upload"],
+  "keywords": [
+    "react",
+    "supabase",
+    "openai",
+    "reporting",
+    "file-upload"
+  ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "vite": "^7.0.6"
+  }
 }
-
