@@ -1,5 +1,14 @@
 {
+  "name": "automatic-client-reporting-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "install:frontend": "cd frontend && npm install"
+  },
   "dependencies": {
-    "vite": "^7.0.6"
+    "vite": "^5.4.19"
   }
 }

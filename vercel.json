@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd automatic-client-reporting-system && npm run build",
+  "outputDirectory": "automatic-client-reporting-system/frontend/dist",
+  "installCommand": "npm install && cd automatic-client-reporting-system && npm install && cd frontend && npm install",
+  "framework": "vite",
+  "devCommand": "cd automatic-client-reporting-system && npm run dev"
+}
