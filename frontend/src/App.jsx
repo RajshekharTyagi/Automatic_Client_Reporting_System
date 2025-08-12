@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
-import { Loader2 } from 'lucide-react'
+import AuthCallback from './components/AuthCallback'
+import { Loader2, FileText } from 'lucide-react'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -36,9 +38,29 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {!session ? <Auth /> : <Dashboard session={session} />}
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Routes>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route 
+            path="/" 
+            element={
+              session ? 
+                <Navigate to="/dashboard" replace /> : 
+                <Auth />
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              session ? 
+                <Dashboard session={session} /> : 
+                <Navigate to="/" replace />
+            } 
+          />
+        </Routes>
+      </div>
+    </Router>
   )
 }
 
