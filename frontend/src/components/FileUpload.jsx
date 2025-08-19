@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, X, BarChart } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { parseFile, extractStructuredData } from '../utils/fileParser'
+import { extractInsights } from '../utils/huggingFaceApi'
 
-export default function FileUpload({ selectedProject, onUploadComplete }) {
+export default function FileUpload({ selectedProject, onUploadComplete, onAnalysisComplete }) {
   const [uploading, setUploading] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [uploadStatus, setUploadStatus] = useState(null)
   const [progress, setProgress] = useState('')
@@ -16,9 +19,10 @@ export default function FileUpload({ selectedProject, onUploadComplete }) {
       'application/csv',
       'application/pdf',
       'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
-    const allowedExtensions = ['.txt', '.csv', '.pdf', '.xls', '.xlsx']
+    const allowedExtensions = ['.txt', '.csv', '.pdf', '.xls', '.xlsx', '.docx']
     
     if (file.size > maxSize) {
       throw new Error('File size must be less than 10MB')
@@ -28,7 +32,7 @@ export default function FileUpload({ selectedProject, onUploadComplete }) {
                         allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     
     if (!hasValidType) {
-      throw new Error('Only .txt, .csv, .pdf, .xls, and .xlsx files are supported')
+      throw new Error('Only .txt, .csv, .pdf, .xls, .xlsx, and .docx files are supported')
     }
   }
 
@@ -83,20 +87,72 @@ export default function FileUpload({ selectedProject, onUploadComplete }) {
 
       if (fileError) throw fileError
 
-      // Generate content based on file type
-      setProgress('Processing file content...')
+      // Parse file content using our utility
+      setProgress('Parsing file content...')
+      let parsedContent = null
+      let fileType = ''
       let content = ''
       
-      if (file.type === 'text/plain' || file.type === 'text/csv') {
-        content = await file.text()
-      } else if (file.type === 'application/pdf') {
-        content = `PDF file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
-      } else {
-        content = `File: ${file.name} (${file.type}) - ${(file.size / 1024).toFixed(1)} KB`
-      }
-      
-      if (!content.trim()) {
-        content = `Uploaded file: ${file.name}`
+      try {
+        // Determine file type from extension
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          fileType = 'csv'
+        } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+          fileType = 'excel'
+        } else if (file.name.toLowerCase().endsWith('.pdf')) {
+          fileType = 'pdf'
+        } else if (file.name.toLowerCase().endsWith('.docx')) {
+          fileType = 'docx'
+        } else {
+          fileType = 'text'
+        }
+        
+        // Parse the file
+        parsedContent = await parseFile(file)
+        content = parsedContent.textContent || ''
+        
+        if (!content.trim()) {
+          content = `Uploaded file: ${file.name}`
+        }
+        
+        // Extract structured data if available
+        const structuredData = extractStructuredData(parsedContent, fileType)
+        
+        // If analyze flag is set, analyze the content with Hugging Face API
+        if (onAnalysisComplete) {
+          setProgress('Analyzing content with AI...')
+          setAnalyzing(true)
+          
+          try {
+            // Extract insights using Hugging Face API
+            const insights = await extractInsights(content)
+            
+            // Prepare analysis data
+            const analysisData = {
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+              textContent: content,
+              structuredData,
+              insights,
+              timestamp: new Date().toISOString()
+            }
+            
+            // Call the onAnalysisComplete callback with the analysis data
+            onAnalysisComplete(analysisData)
+          } catch (error) {
+            console.error('Analysis error:', error)
+            setUploadStatus({
+              type: 'error',
+              message: `File uploaded but analysis failed: ${error.message}`
+            })
+          } finally {
+            setAnalyzing(false)
+          }
+        }
+      } catch (parseError) {
+        console.error('Parsing error:', parseError)
+        content = `Failed to parse ${file.name}: ${parseError.message}`
       }
 
       setProgress('Generating report...')
@@ -112,7 +168,7 @@ Project: ${selectedProject.name}
 Content Preview:
 ${content.substring(0, 500)}${content.length > 500 ? '...' : ''}
 
-This file has been successfully uploaded and is ready for analysis.`
+${analyzing ? 'AI analysis in progress...' : 'This file has been successfully uploaded and is ready for analysis.'}`
 
       // Save report to database
       const { data: report, error: reportError } = await supabase
@@ -133,7 +189,9 @@ This file has been successfully uploaded and is ready for analysis.`
 
       setUploadStatus({ 
         type: 'success', 
-        message: 'File uploaded and report generated successfully!' 
+        message: analyzing 
+          ? 'File uploaded! AI analysis in progress...' 
+          : 'File uploaded and report generated successfully!' 
       })
       
       onUploadComplete?.(report)
@@ -260,7 +318,7 @@ This file has been successfully uploaded and is ready for analysis.`
               </p>
             </div>
             <div className="text-xs text-gray-500 space-y-1 bg-gray-50 rounded-lg p-3">
-              <p className="font-medium">📄 Supports: .txt, .csv, .pdf, .xls, .xlsx files</p>
+              <p className="font-medium">📄 Supports: .txt, .csv, .pdf, .xls, .xlsx, .docx files</p>
               <p className="font-medium">📏 Maximum file size: 10MB</p>
             </div>
           </div>
@@ -276,9 +334,10 @@ This file has been successfully uploaded and is ready for analysis.`
             <p className="font-semibold mb-2 text-blue-900">🚀 How it works:</p>
             <ol className="list-decimal list-inside space-y-1 text-xs leading-relaxed">
               <li>Select a project from the dropdown above</li>
-              <li>Upload your file (.txt, .csv, .pdf, etc.)</li>
+              <li>Upload your file (.txt, .csv, .pdf, .docx, etc.)</li>
               <li>AI automatically analyzes and generates insights</li>
-              <li>View detailed reports in the Reports tab</li>
+              <li>View detailed analysis with charts and summaries</li>
+              <li>Ask questions about your document content</li>
             </ol>
           </div>
         </div>

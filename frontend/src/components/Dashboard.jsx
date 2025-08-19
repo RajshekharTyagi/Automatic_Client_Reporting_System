@@ -17,10 +17,13 @@ import {
   FolderOpen,
   File,
   Trash2,
-  Edit3
+  Edit3,
+  BarChart2
 } from 'lucide-react'
 import { setupDatabase } from '../utils/setupDatabase'
+import { generateReportPDF } from '../utils/pdfGenerator'
 import FileUpload from './FileUpload'
+import FileAnalysisResults from './FileAnalysisResults'
 
 export default function Dashboard({ session }) {
   const [userProfile, setUserProfile] = useState(null)
@@ -34,6 +37,8 @@ export default function Dashboard({ session }) {
   const [projectForm, setProjectForm] = useState({ name: '', description: '' })
   const [creatingProject, setCreatingProject] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [analysisData, setAnalysisData] = useState(null)
+  const [showAnalysisResults, setShowAnalysisResults] = useState(false)
 
   useEffect(() => {
     setupDatabase()
@@ -122,6 +127,16 @@ export default function Dashboard({ session }) {
     // Refresh reports and files when upload completes
     fetchReports()
     fetchFiles(selectedProject?.id)
+  }
+  
+  const handleAnalysisComplete = (data) => {
+    setAnalysisData(data)
+    setShowAnalysisResults(true)
+  }
+  
+  const handleCloseAnalysis = () => {
+    setShowAnalysisResults(false)
+    setAnalysisData(null)
   }
 
   const createProject = async (projectData) => {
@@ -264,6 +279,7 @@ export default function Dashboard({ session }) {
               { id: 'projects', label: 'Projects', icon: FolderOpen, color: 'from-purple-500 to-pink-500' },
               { id: 'upload', label: 'Upload', icon: Upload, color: 'from-green-500 to-emerald-500' },
               { id: 'reports', label: 'Reports', icon: Brain, color: 'from-orange-500 to-red-500' },
+              { id: 'analyze', label: 'Analyze', icon: BarChart2, color: 'from-purple-500 to-pink-500' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -647,6 +663,84 @@ export default function Dashboard({ session }) {
             </div>
           </div>
         )}
+        
+        {/* Analyze Tab */}
+        {activeTab === 'analyze' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-6">
+                Analyze Files
+              </h2>
+              
+              {showAnalysisResults ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleCloseAnalysis}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>Back to Upload</span>
+                  </button>
+                  
+                  <FileAnalysisResults 
+                    analysisData={analysisData} 
+                    onClose={handleCloseAnalysis} 
+                  />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Project Selection */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6">
+                    <h3 className="font-semibold text-purple-900 mb-4 flex items-center space-x-2">
+                      <FolderOpen className="h-5 w-5" />
+                      <span>Selected Project</span>
+                    </h3>
+                    {selectedProject ? (
+                      <div className="flex items-center justify-between bg-white rounded-xl p-4">
+                        <div>
+                          <p className="font-semibold text-purple-800">{selectedProject.name}</p>
+                          {selectedProject.description && (
+                            <p className="text-sm text-purple-600">{selectedProject.description}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('projects')}
+                          className="bg-purple-100 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-200 transition-colors duration-200 text-sm font-medium"
+                        >
+                          Change Project
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-purple-800 mb-4">Choose a project to analyze files:</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {projects.map(project => (
+                            <button
+                              key={project.id}
+                              onClick={() => setSelectedProject(project)}
+                              className="text-left p-4 bg-white border border-purple-200 rounded-xl hover:bg-purple-50 transition-all duration-200 transform hover:scale-105"
+                            >
+                              <p className="font-semibold text-gray-900">{project.name}</p>
+                              {project.description && (
+                                <p className="text-sm text-gray-600">{project.description}</p>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <FileUpload 
+                    selectedProject={selectedProject}
+                    onUploadComplete={handleUploadComplete}
+                    onAnalysisComplete={handleAnalysisComplete}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Enhanced Reports Tab */}
         {activeTab === 'reports' && (
@@ -696,7 +790,11 @@ export default function Dashboard({ session }) {
                             </p>
                           </div>
                         </div>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <button 
+                          onClick={() => generateReportPDF(report)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                          title="Download PDF Report"
+                        >
                           <Download className="h-4 w-4" />
                         </button>
                       </div>
