@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import { Toaster } from 'react-hot-toast'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
 import AuthCallback from './components/AuthCallback'
-import { Loader2 } from 'lucide-react'
+import { Loader2, FileText } from 'lucide-react'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -40,6 +41,19 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#fff',
+              color: '#1f2937',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              borderRadius: '0.5rem',
+              padding: '0.75rem 1rem',
+            },
+          }}
+        />
         <Routes>
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route 
