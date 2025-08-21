@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
 import AuthCallback from './components/AuthCallback'
-import { Loader2, FileText } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 function App() {
   const [session, setSession] = useState(null)

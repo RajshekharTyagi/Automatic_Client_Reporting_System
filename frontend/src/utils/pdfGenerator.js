@@ -33,9 +33,7 @@ export const generateReportPDF = async (report) => {
     pdf.text('Summary:', 20, 90);
     
     pdf.setFontSize(10);
-    // Get report content or summary or default message
-    const reportContent = report.content || report.summary || 'No content available';
-    const splitSummary = pdf.splitTextToSize(reportContent, 170);
+    const splitSummary = pdf.splitTextToSize(report.summary || 'No summary available', 170);
     pdf.text(splitSummary, 20, 100);
     
     // Save the PDF
