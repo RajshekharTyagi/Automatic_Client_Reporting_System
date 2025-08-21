@@ -28,13 +28,16 @@ export const useAuth = () => {
   const signInWithGitHub = async () => {
     try {
       // Get the current URL for redirect
+      // Use absolute URL to ensure it works in all environments
       const redirectUrl = `${window.location.origin}/auth/callback`
       console.log('Redirecting to:', redirectUrl)
       
+      // Force the redirect URL to use the current origin
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false
         }
       })
       if (error) throw error
