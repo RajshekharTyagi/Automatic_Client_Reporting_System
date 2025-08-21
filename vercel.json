@@ -1,10 +1,16 @@
 {
-  "buildCommand": "cd automatic-client-reporting-system && npm run build",
-  "outputDirectory": "automatic-client-reporting-system/frontend/dist",
-  "installCommand": "npm install && cd automatic-client-reporting-system && npm install && cd frontend && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install && cd frontend && npm install",
   "framework": "vite",
-  "devCommand": "cd automatic-client-reporting-system && npm run dev",
+  "devCommand": "npm run dev",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    { "src": "/auth/callback", "dest": "/index.html" },
+    { "src": "/auth/(.*)", "dest": "/index.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
