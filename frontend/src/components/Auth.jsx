@@ -11,10 +11,14 @@ export default function Auth() {
       setLoading(true)
       setError(null)
       
+      // Use the auth callback route for redirect
+      const redirectUrl = `${window.location.origin}/auth/callback`
+      console.log('Redirecting to:', redirectUrl)
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: redirectUrl
         }
       })
       

@@ -27,10 +27,14 @@ export const useAuth = () => {
 
   const signInWithGitHub = async () => {
     try {
+      // Get the current URL for redirect
+      const redirectUrl = `${window.location.origin}/auth/callback`
+      console.log('Redirecting to:', redirectUrl)
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl
         }
       })
       if (error) throw error
